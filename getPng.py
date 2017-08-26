@@ -5,41 +5,67 @@ from struct import *
 from pprint import pprint
 
 import json
+import os
+import os.path
+import zlib
 
-jsonfile = '/home/jackywei/myGreatWork/photo/map.json'
-
-def load():
-    with open(jsonfile) as json_file:
+def load(myfile):
+    with open(myfile) as json_file:
         data = json.load(json_file)
         return data
 
-file = open("/home/jackywei/myGreatWork/photo/fusion.mbn", "rb")
+#"/home/jackywei/myGreatWork/photo/fusion.mbn"
+def readmbn(filename,curdir):
+    mbndirname = filename.split(".")[-2].split(os.sep)[-1]
+    subdir = curdir+os.sep+mbndirname
+    print subdir
+    try:
+        os.mkdir(subdir)
+    except OSError,e:
+        print e.message
+    mbnfile = open(filename, "rb")
+    (notuseData,myoffset) = unpack("II",mbnfile.read(4+4))
+    print ("myoffset is %08x "%(myoffset))
+    fjsonname = subdir+os.sep+mbndirname+'.json'
+    print "fjsonname = %s" % fjsonname
+    fjson = open(fjsonname,'wb')
+    filedata = mbnfile.read(myoffset)
+    fjson.write(filedata)
+    fjson.close()
+    data = load(fjsonname)
+    offsetstart = mbnfile.tell()
+    for i in range(len(data)):
+        #print i,data[i]
+        print "================================"
+        print data[i]['name'],data[i]['size']
+        print (subdir+os.sep+"%s" % (data[i]['name']))
+        productname = subdir+os.sep+"%s" % (data[i]['name'])
+        fmap = open(productname,'wb')
+        print ("offset = %08x,json offset = %08x,logic offset = %08x"%(mbnfile.tell(),data[i]['offset'],(mbnfile.tell() - offsetstart)))
+        filedata = mbnfile.read(data[i]['size'])
+        if data[i]['name'].split(".")[-1] == 'dds':
+            fmap.write(zlib.decompress(filedata))
+        else:
+            fmap.write(filedata)
+        fmap.close()
+    mbnfile.close()
 
-(notuseData,myoffset) = unpack("II",file.read(4+4))
+if __name__ == '__main__':
+    print os.path.realpath(__file__)
+    print "os.path.dirname(os.path.realpath(__file__))=%s" % os.path.dirname(os.path.realpath(__file__))
+    curdir = os.path.dirname(os.path.realpath(__file__))
+    for parent,dirnames,filenames in os.walk(os.path.dirname(os.path.realpath(__file__))):
+        #print "========================"
+        #for dirname in  dirnames: 
+        #    print "parent is:" + parent
+        #    print  "dirname is" + dirname
 
-print ("myoffset is %08x "%(myoffset))
+        for filename in filenames:
+            #print "parent is" + parent
+            #print "filename is:" + filename
+            #print "the full name of the file is:" + os.path.join(parent,filename)
+            tempfilename = os.path.join(parent,filename)
+            if tempfilename.split(".")[-1] == "mbn":
+                print tempfilename
+                readmbn(tempfilename,curdir)
 
-
-fjson = open(jsonfile,'wb')
-
-
-filedata = file.read(myoffset)
-
-fjson.write(filedata)
-fjson.close()
-
-data = load()
-
-offsetstart = file.tell()
-
-for i in range(len(data)):
-    #print i,data[i]
-    print "================================"
-    print data[i]['name'],data[i]['size']
-    fmap = open('/home/jackywei/myGreatWork/photo/%s'%(data[i]['name']),'wb')
-    print ("offset = %08x,json offset = %08x,logic offset = %08x"%(file.tell(),data[i]['offset'],(file.tell() - offsetstart)))
-    filedata = file.read(data[i]['size'])
-    fmap.write(filedata)
-    fmap.close()
-
-file.close()
