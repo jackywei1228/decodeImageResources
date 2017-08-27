@@ -44,9 +44,11 @@ def readmbn(filename,curdir):
         print ("offset = %08x,json offset = %08x,logic offset = %08x"%(mbnfile.tell(),data[i]['offset'],(mbnfile.tell() - offsetstart)))
         filedata = mbnfile.read(data[i]['size'])
         if data[i]['name'].split(".")[-1] == 'dds':
-            filedataSpace = bytearray(data[i]['dst_size'])
-            filedataSpace[0:len(filedata)] = filedata[:]
-            fmap.write(zlib.decompress(buffer(filedataSpace)))
+            #filedataSpace = bytearray(data[i]['dst_size'])
+            #filedataSpace[0:len(filedata)] = filedata[:]
+            fmap.write(zlib.decompress(filedata))
+            fmap.seek(12)
+            fmap.write(pack('I',45))
         else:
             fmap.write(filedata)
         fmap.close()
