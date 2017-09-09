@@ -12,5 +12,5 @@ DDS格式是DirectX纹理压缩文件,可以用工具转成png或者其他的格
 
 PNG可以直接如图看咯:
 
-<img src="images.png?raw=true" style="width:786px;height:560px;">
+<img src="res/images.png?raw=true" style="width:786px;height:560px;">
 
